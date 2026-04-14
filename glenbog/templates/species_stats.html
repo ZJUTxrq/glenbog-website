@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Species Summary{% endblock %}
+
+{% block content %}
+<style>
+  .card { width: min(100%, 960px) !important; }
+  main { align-items: flex-start !important; }
+  .stats-header { margin-bottom: 1.5rem; }
+  .stats-header h2 { margin: 0 0 1rem; }
+  .totals { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+  .total-card { flex: 1; background: #f1f5f9; border-radius: 1rem; padding: 1rem 1.5rem; text-align: center; }
+  .total-card .value { font-size: 2rem; font-weight: 700; color: #2563eb; }
+  .total-card .label { font-size: 0.85rem; color: #64748b; margin-top: 0.25rem; }
+  .stats-table { width: 100%; border-collapse: collapse; }
+  .stats-table th { background: #f1f5f9; padding: 0.75rem 1rem; text-align: left; font-weight: 600; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+  .stats-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+  .stats-table tr:hover { background: #f8fafc; }
+  .badge { display: inline-block; padding: 0.3rem 0.7rem; background: #dbeafe; color: #0369a1; border-radius: 0.5rem; font-size: 0.82rem; white-space: nowrap; }
+  .bar-wrap { background: #e2e8f0; border-radius: 999px; height: 10px; width: 100%; min-width: 80px; }
+  .bar { background: #2563eb; border-radius: 999px; height: 10px; }
+</style>
+
+<div class="stats-header">
+  <h2>Species Summary</h2>
+</div>
+
+<div class="totals">
+  <div class="total-card">
+    <div class="value">{{ total_obs }}</div>
+    <div class="label">Total Observations</div>
+  </div>
+  <div class="total-card">
+    <div class="value">{{ total_species }}</div>
+    <div class="label">Total Species</div>
+  </div>
+  <div class="total-card">
+    <div class="value">{{ summaries | length }}</div>
+    <div class="label">Total Classes</div>
+  </div>
+</div>
+
+{% if summaries %}
+<table class="stats-table">
+  <thead>
+    <tr>
+      <th>Class</th>
+      <th>Class Description</th>
+      <th>Total Species</th>
+      <th>Total Observations</th>
+      <th>Proportion</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in summaries %}
+    <tr>
+      <td><span class="badge">{{ s.class_display }}</span></td>
+      <td>{{ s.class_description or '—' }}</td>
+      <td>{{ s.num_species }}</td>
+      <td>{{ s.num_observations }}</td>
+      <td style="min-width: 120px;">
+        <div class="bar-wrap">
+          <div class="bar" style="width: {{ (s.num_observations / total_obs * 100) | round(1) }}%"></div>
+        </div>
+        <span style="font-size: 0.8rem; color: #64748b;">{{ (s.num_observations / total_obs * 100) | round(1) }}%</span>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

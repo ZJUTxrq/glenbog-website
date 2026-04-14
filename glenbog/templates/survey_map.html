@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Survey Maps{% endblock %}
+
+{% block content %}
+<style>
+  .card { width: min(100%, 1100px) !important; }
+  main { align-items: flex-start !important; }
+  .survey-layout { display: flex; gap: 1.2rem; }
+  .survey-sidebar { width: 220px; flex-shrink: 0; }
+  .survey-sidebar h3 { font-size: 0.82rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 0.6rem; }
+  .survey-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; max-height: 520px; overflow-y: auto; }
+  .survey-list a { display: block; padding: 0.5rem 0.75rem; border-radius: 0.6rem; font-size: 0.82rem; color: #334155; text-decoration: none; line-height: 1.4; transition: background 0.12s; cursor: pointer; }
+  .survey-list a:hover { background: #eff6ff; color: #2563eb; }
+  .survey-list a.active { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
+  .survey-content { flex: 1; min-width: 0; }
+  .survey-heading { margin-bottom: 0.75rem; }
+  .survey-heading h2 { margin: 0 0 0.2rem; font-size: 1.2rem; }
+  .survey-heading p { margin: 0; color: #64748b; font-size: 0.85rem; }
+  #map { width: 100%; height: 460px; border-radius: 1rem; z-index: 0; }
+</style>
+
+<div class="survey-layout">
+  <aside class="survey-sidebar">
+    <h3>Surveys</h3>
+    <ul class="survey-list">
+      {% for key in survey_keys %}
+        <li>
+          <a class="{{ 'active' if selected_key == key else '' }}"
+             data-date="{{ key[0] }}"
+             data-resource="{{ key[1] }}"
+             onclick="loadSurvey(this)">
+            {{ key[0] }}<br>
+            <span style="color:#64748b;font-weight:400">{{ key[1] }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </aside>
+
+  <div class="survey-content">
+    <div class="survey-heading">
+      <h2 id="survey-date">{{ selected_key[0] if selected_key else '' }}</h2>
+      <p id="survey-resource">{{ selected_key[1] if selected_key else '' }}</p>
+    </div>
+    <div id="map"></div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map').setView([-36.555, 149.425], 14);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 18,
+  }).addTo(map);
+
+  const markerIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:12px;height:12px;background:#2563eb;border:2px solid white;border-radius:50%;box-shadow:0 0 0 2px #2563eb;"></div>',
+    iconSize: [12, 12],
+    iconAnchor: [6, 6],
+  });
+
+  let currentMarkers = [];
+
+  function clearMarkers() {
+    currentMarkers.forEach(m => map.removeLayer(m));
+    currentMarkers = [];
+  }
+
+  function loadSurvey(el) {
+    // Update active state
+    document.querySelectorAll('.survey-list a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+
+    const date = el.dataset.date;
+    const resource = el.dataset.resource;
+
+    // Update heading
+    document.getElementById('survey-date').textContent = date;
+    document.getElementById('survey-resource').textContent = resource;
+
+    // Fetch observations
+    fetch(`/survey-map/data?date=${encodeURIComponent(date)}&resource=${encodeURIComponent(resource)}`)
+      .then(r => r.json())
+      .then(points => {
+        clearMarkers();
+        points.forEach(p => {
+          const m = L.marker([p.lat, p.lng], { icon: markerIcon })
+            .addTo(map)
+            .bindPopup(`<strong style="font-style:italic">${p.scientific}</strong><br><span style="color:#475569">${p.common}</span>`);
+          currentMarkers.push(m);
+        });
+        if (currentMarkers.length > 0) {
+          map.fitBounds(L.featureGroup(currentMarkers).getBounds().pad(0.2));
+        }
+      });
+  }
+
+  // Load initial survey on page load
+  const firstLink = document.querySelector('.survey-list a.active') || document.querySelector('.survey-list a');
+  if (firstLink) loadSurvey(firstLink);
+</script>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Time Dot Graph{% endblock %}
+
+{% block content %}
+<style>
+  .card { width: min(100%, 1100px) !important; }
+  main { align-items: flex-start !important; }
+  #chart-container { width: 100%; margin-top: 0.75rem; }
+</style>
+
+<div style="margin-bottom: 0.75rem;">
+  <h2 style="margin: 0;">Time Dot Graph</h2>
+  <p style="margin: 0.4rem 0 0; color: #64748b; font-size: 0.9rem;">Long-term species observation records over time</p>
+</div>
+
+<div id="chart-container">
+  <canvas id="timeDotChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script>
+  const observations = [
+    {% for o in observations %}
+    {
+      x: {{ o.event_date.strftime('%Y-%m-%d') | tojson }},
+      y: {{ o.vernacular_name | tojson }},
+      scientific: {{ o.scientific_name | tojson }},
+    },
+    {% endfor %}
+  ];
+
+  const speciesList = [...new Set(observations.map(o => o.y))];
+
+  // Build one dataset per species (for lines connecting same species)
+  const colors = [
+    '#2563eb','#16a34a','#dc2626','#d97706','#7c3aed',
+    '#0891b2','#be185d','#65a30d','#ea580c','#6366f1',
+    '#14b8a6','#f59e0b','#ef4444','#8b5cf6','#10b981',
+  ];
+
+  const datasets = speciesList.map((species, i) => {
+    const pts = observations
+      .filter(o => o.y === species)
+      .map(o => ({ x: o.x, y: i, vernacular: o.y, scientific: o.scientific }));
+    const color = colors[i % colors.length];
+    return {
+      label: species,
+      data: pts,
+      backgroundColor: color,
+      borderColor: color,
+      borderWidth: 1.5,
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      showLine: true,
+      tension: 0,
+    };
+  });
+
+  const ctx = document.getElementById('timeDotChart').getContext('2d');
+  const chartHeight = Math.max(180, speciesList.length * 15);
+  document.getElementById('timeDotChart').style.height = chartHeight + 'px';
+
+  new Chart(ctx, {
+    type: 'scatter',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const d = ctx.raw;
+              return [`${d.vernacular} (${d.scientific})`, `Date: ${d.x}`];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'year', displayFormats: { year: 'yyyy' } },
+          title: { display: true, text: 'Year' },
+          grid: { color: '#f1f5f9' },
+        },
+        y: {
+          type: 'linear',
+          min: -0.5,
+          max: speciesList.length - 0.5,
+          ticks: {
+            stepSize: 1,
+            callback: val => speciesList[val] || '',
+            font: { size: 11 },
+          },
+          grid: { color: '#f1f5f9' },
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}
