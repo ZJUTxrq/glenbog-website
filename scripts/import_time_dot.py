@@ -16,7 +16,7 @@ from app import app
 from glenbog.extensions import db
 from glenbog.models import TimeDotObservation
 
-CSV_PATH = '/data/TimeDotGraph_Data_Glenbog.csv'
+CSV_PATH = '/data/TimeDotGraph_Data.csv'
 
 
 def import_time_dot(csv_path: str) -> None:
@@ -29,7 +29,7 @@ def import_time_dot(csv_path: str) -> None:
         for row in reader:
             if not row['eventDate']:
                 continue
-            event_date = datetime.strptime(row['eventDate'], '%d/%m/%Y').date()
+            event_date = datetime.strptime(row['eventDate'], '%Y-%m-%d').date()
             db.session.add(TimeDotObservation(
                 scientific_name=row['scientificName'],
                 vernacular_name=row['vernacularName'],

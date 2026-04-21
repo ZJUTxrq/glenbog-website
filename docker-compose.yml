@@ -22,6 +22,7 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/glenbog
       FLASK_ENV: development
+      DATA_DIR: /data
     depends_on:
       - db
     volumes:

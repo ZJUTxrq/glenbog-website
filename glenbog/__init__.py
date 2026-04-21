@@ -10,6 +10,7 @@ def create_app():
     app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['DATA_DIR'] = os.environ.get('DATA_DIR', '/data')
 
     db.init_app(app)
     bcrypt.init_app(app)

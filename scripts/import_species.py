@@ -3,7 +3,7 @@ Import species data from species_summary.csv into the PostgreSQL database.
 
 Usage (inside the app container):
     python import_species.py
-    python import_species.py /path/to/species_summary.csv
+    python import_species.py /path/to/Species_Summary.csv
 """
 
 import csv
@@ -18,7 +18,7 @@ from glenbog.extensions import db
 from glenbog.models import Species
 
 
-CSV_PATH = sys.argv[1] if len(sys.argv) > 1 else '/data/species_summary.csv'
+CSV_PATH = sys.argv[1] if len(sys.argv) > 1 else '/data/Species_Summary.csv'
 
 
 def import_species(csv_path: str) -> None:
@@ -33,7 +33,7 @@ def import_species(csv_path: str) -> None:
             for row in reader:
                 # Skip if already imported (avoid duplicates)
                 existing = Species.query.filter_by(
-                    scientific_name=row['scientificName']
+                    scientific_name=row['scientificName_clean']
                 ).first()
                 if existing:
                     continue
@@ -45,7 +45,7 @@ def import_species(csv_path: str) -> None:
                 species = Species(
                     class_display=row['class_display'],
                     order=row['order'],
-                    scientific_name=row['scientificName'],
+                    scientific_name=row['scientificName_clean'],
                     vernacular_name=row['vernacularName'],
                     num_observations=int(row['num_observations']),
                     most_recent_date=most_recent,

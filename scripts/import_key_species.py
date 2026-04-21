@@ -16,7 +16,7 @@ from app import app
 from glenbog.extensions import db
 from glenbog.models import KeySpecies
 
-KEY_SPECIES_CSV = '/data/key_species.csv'
+KEY_SPECIES_CSV = '/data/Key_Species.csv'
 
 
 def import_key_species(csv_path: str) -> None:

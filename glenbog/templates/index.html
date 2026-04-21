@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Glenbog Website{% endblock %}
+{% block title %}Activism Tool{% endblock %}
 
 {% block content %}
 <style>
@@ -39,15 +39,15 @@
       <li><a href="{{ url_for('main.time_dot_graph') }}">Time Dot Graph</a></li>
       <li><a href="{{ url_for('main.survey_map') }}">Survey Maps</a></li>
       <li><a href="{{ url_for('main.species_stats') }}">Species Summary</a></li>
+      <li><a href="{{ url_for('main.order_summary') }}">Order Summary</a></li>
     </ul>
   </aside>
 
   <div class="home-content">
     <div class="hero-banner">
-      <img src="{{ url_for('static', filename='glenbog.png') }}" alt="Glenbog">
+      <img src="{{ url_for('static', filename='glenbog.png') }}" alt="Activism Tool">
       <div class="hero-overlay">
-        <h1>Welcome to Glenbog</h1>
-        <p>Explore wildlife observations from Glenbog Nature Reserve</p>
+        <h1>Activism Tool</h1>
       </div>
     </div>
 

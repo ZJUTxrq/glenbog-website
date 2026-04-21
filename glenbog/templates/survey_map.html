@@ -66,6 +66,17 @@
 
   let currentMarkers = [];
 
+  fetch('/api/boundary')
+    .then(r => r.json())
+    .then(boundary => {
+      if (boundary.length > 0) {
+        L.polygon(boundary, {
+          color: '#16a34a', weight: 2,
+          fillColor: '#16a34a', fillOpacity: 0.08,
+        }).addTo(map).bindPopup('Boundary');
+      }
+    });
+
   function clearMarkers() {
     currentMarkers.forEach(m => map.removeLayer(m));
     currentMarkers = [];
@@ -91,7 +102,7 @@
         points.forEach(p => {
           const m = L.marker([p.lat, p.lng], { icon: markerIcon })
             .addTo(map)
-            .bindPopup(`<strong style="font-style:italic">${p.scientific}</strong><br><span style="color:#475569">${p.common}</span>`);
+            .bindPopup(`<strong style="font-style:italic">${p.scientific}</strong><br><span style="color:#475569">${p.common}</span>${p.recorded_by ? `<br><span style="color:#64748b;font-size:0.85em">Recorded by: ${p.recorded_by}</span>` : ''}`);
           currentMarkers.push(m);
         });
         if (currentMarkers.length > 0) {

@@ -1,5 +1,5 @@
 """
-Import at-risk species data from At_Risk_Species_Glenbog.csv into PostgreSQL.
+Import at-risk species data from At_Risk_Species.csv into PostgreSQL.
 
 Usage (inside the app container):
     python scripts/import_at_risk_species.py
@@ -16,7 +16,7 @@ from app import app
 from glenbog.extensions import db
 from glenbog.models import AtRiskSpecies
 
-CSV_PATH = '/data/At_Risk_Species_Glenbog.csv'
+CSV_PATH = '/data/At_Risk_Species.csv'
 
 
 def import_at_risk_species(csv_path: str) -> None:
@@ -28,19 +28,19 @@ def import_at_risk_species(csv_path: str) -> None:
         count = 0
         for row in reader:
             obs_date = None
-            if row['Date of Observation']:
-                obs_date = date.fromisoformat(row['Date of Observation'])
+            if row['most_recent_observation']:
+                obs_date = date.fromisoformat(row['most_recent_observation'])
 
             db.session.add(AtRiskSpecies(
-                scientific_name=row['Scientific Name'],
-                common_name=row['Common Name'],
-                class_display=row['Class'],
-                order=row['Order'],
-                num_observations=int(float(row['No. of Observations'])),
+                scientific_name=row['scientificName'],
+                common_name=row['vernacularName'],
+                class_display=row['class'],
+                order=row['order'],
+                num_observations=int(float(row['number_of_observations'])),
                 date_of_observation=obs_date,
-                status=row['Status'],
-                latitude=float(row['Decimal Latitude']) if row['Decimal Latitude'] else None,
-                longitude=float(row['Decimal Longitude']) if row['Decimal Longitude'] else None,
+                status=row['at_risk_status'],
+                latitude=float(row['decimalLatitude']) if row['decimalLatitude'] else None,
+                longitude=float(row['decimalLongitude']) if row['decimalLongitude'] else None,
             ))
             count += 1
 

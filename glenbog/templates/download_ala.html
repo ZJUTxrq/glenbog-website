@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Download ALA Data{% endblock %}
+
+{% block content %}
+<style>
+  .card { width: min(100%, 640px) !important; }
+  .section { margin-bottom: 1.5rem; }
+  .section h3 { margin: 0 0 0.75rem; font-size: 1rem; font-weight: 600; }
+  .file-label { display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 1rem; border: 2px dashed #cbd5e1; border-radius: 0.9rem; cursor: pointer; color: #64748b; font-size: 0.9rem; transition: border-color 0.15s; }
+  .file-label:hover { border-color: #2563eb; color: #2563eb; }
+  .file-label input { display: none; }
+  #file-name { font-size: 0.85rem; color: #334155; margin-top: 0.4rem; }
+  .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 999px; font-size: 0.95rem; font-weight: 600; cursor: pointer; border: none; transition: background 0.15s; width: auto; }
+  .btn-primary { background: #2563eb; color: white; }
+  .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+  .btn-success { background: #16a34a; color: white; }
+  .btn-success:hover { background: #15803d; }
+  .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+  .progress-wrap { background: #e2e8f0; border-radius: 999px; height: 8px; margin: 0.6rem 0 0.3rem; }
+  .progress-bar { background: #2563eb; border-radius: 999px; height: 8px; width: 0%; transition: width 0.4s; }
+  .status-text { font-size: 0.85rem; color: #64748b; }
+  .error-text { font-size: 0.85rem; color: #dc2626; margin-top: 0.4rem; }
+  #pipeline { display: none; margin-top: 1.2rem; border-top: 1px solid #e2e8f0; padding-top: 1rem; }
+  #pipeline h4 { margin: 0 0 0.6rem; font-size: 0.85rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+  .step-list { display: flex; flex-direction: column; gap: 0.3rem; }
+  .step { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; color: #334155; }
+  .step-icon { width: 18px; text-align: center; flex-shrink: 0; }
+  .step.pending .step-icon { color: #cbd5e1; }
+  .step.running .step-icon { color: #2563eb; }
+  .step.done .step-icon { color: #16a34a; }
+  .step.error .step-icon { color: #dc2626; }
+  .step-tag { font-size: 0.72rem; padding: 0.1rem 0.45rem; border-radius: 999px; font-weight: 600; }
+  .tag-clean { background: #dbeafe; color: #1d4ed8; }
+  .tag-import { background: #dcfce7; color: #15803d; }
+#pipeline-section { display: none; }
+</style>
+
+<div style="margin-bottom: 1.25rem;">
+  <h2 style="margin: 0;">Download ALA Data</h2>
+  <p style="margin: 0.4rem 0 0; color: #64748b; font-size: 0.9rem;">Upload a KML boundary file to fetch, clean, and import occurrence data</p>
+</div>
+
+<div class="section">
+  <h3>1. Upload KML File</h3>
+  <label class="file-label">
+    <span>📂 Choose KML file…</span>
+    <input type="file" id="kml-input" accept=".kml">
+  </label>
+  <div id="file-name"></div>
+</div>
+
+<div class="section">
+  <h3>2. Start Pipeline</h3>
+  <button class="btn btn-primary" id="start-btn" disabled>Start Download &amp; Process</button>
+</div>
+
+<div id="pipeline-section">
+  <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+  <div class="status-text" id="status-text"></div>
+  <div class="error-text" id="error-text"></div>
+
+  <div id="pipeline">
+    <h4>Steps</h4>
+    <div class="step-list" id="step-list"></div>
+  </div>
+</div>
+
+
+<script>
+  const kmlInput   = document.getElementById('kml-input');
+  const startBtn   = document.getElementById('start-btn');
+  const fileName   = document.getElementById('file-name');
+  const pipelineSection = document.getElementById('pipeline-section');
+  const progressBar = document.getElementById('progress-bar');
+  const statusText = document.getElementById('status-text');
+  const errorText  = document.getElementById('error-text');
+  const pipeline   = document.getElementById('pipeline');
+  const stepList   = document.getElementById('step-list');
+
+  const ICONS = { pending: '○', running: '⟳', done: '✓', error: '✗' };
+  const LABELS = { clean: 'clean', import: 'import' };
+
+  kmlInput.addEventListener('change', () => {
+    const f = kmlInput.files[0];
+    if (f) { fileName.textContent = f.name; startBtn.disabled = false; }
+  });
+
+  startBtn.addEventListener('click', async () => {
+    startBtn.disabled = true;
+    pipelineSection.style.display = 'block';
+    errorText.textContent = '';
+    statusText.textContent = 'Uploading KML…';
+
+    const formData = new FormData();
+    formData.append('kml_file', kmlInput.files[0]);
+
+    const res  = await fetch('/download-ala/start', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.error) { errorText.textContent = data.error; startBtn.disabled = false; return; }
+
+    poll(data.job_id);
+  });
+
+  function renderSteps(steps) {
+    if (!steps || steps.length === 0) return;
+    pipeline.style.display = 'block';
+    stepList.innerHTML = steps.map(s => `
+      <div class="step ${s.status}">
+        <span class="step-icon">${ICONS[s.status] || '○'}</span>
+        <span class="step-tag tag-${s.type}">${s.type}</span>
+        <span>${s.name}</span>
+        ${s.error ? `<span style="color:#dc2626;font-size:0.78rem"> — ${s.error}</span>` : ''}
+      </div>`).join('');
+  }
+
+  function poll(jobId) {
+    const interval = setInterval(async () => {
+      const res = await fetch(`/download-ala/status/${jobId}`);
+      const job = await res.json();
+
+      renderSteps(job.steps);
+
+      if (job.status === 'error') {
+        clearInterval(interval);
+        errorText.textContent = 'Error: ' + (job.error || 'Unknown');
+        startBtn.disabled = false;
+        return;
+      }
+
+      const pct = job.total > 0 ? Math.min(95, Math.round(job.fetched / job.total * 100)) : 0;
+
+      if (job.status === 'downloading' || job.status === 'starting') {
+        progressBar.style.width = pct + '%';
+        statusText.textContent = job.total > 0
+          ? `Downloading — batch ${job.batch}/${job.batches}, ${job.fetched.toLocaleString()} / ${job.total.toLocaleString()} records (${pct}%)`
+          : 'Connecting to ALA…';
+      } else if (job.status === 'copying') {
+        progressBar.style.width = '96%';
+        statusText.textContent = 'Saving data…';
+      } else if (job.status === 'done') {
+        clearInterval(interval);
+        progressBar.style.width = '100%';
+        statusText.textContent = `All done — ${job.fetched.toLocaleString()} records downloaded, cleaned, and imported.`;
+        startBtn.disabled = false;
+      }
+    }, 2000);
+  }
+</script>
+{% endblock %}

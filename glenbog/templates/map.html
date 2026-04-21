@@ -10,11 +10,12 @@
   .legend { margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap; }
   .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #475569; }
   .legend-dot { width: 12px; height: 12px; border-radius: 50%; background: #dc2626; border: 2px solid white; box-shadow: 0 0 0 2px #dc2626; }
+  .legend-boundary { width: 22px; height: 4px; background: #16a34a; border-radius: 2px; }
 </style>
 
 <div style="margin-bottom: 0.75rem;">
   <h2 style="margin: 0;">At-Risk Species Map</h2>
-  <p style="margin: 0.4rem 0 0; color: #64748b; font-size: 0.9rem;">Locations of at-risk species records in Glenbog area</p>
+  <p style="margin: 0.4rem 0 0; color: #64748b; font-size: 0.9rem;">Locations of at-risk species records</p>
 </div>
 
 <div id="map"></div>
@@ -56,6 +57,17 @@
     },
     {% endfor %}
   ];
+
+  fetch('/api/boundary')
+    .then(r => r.json())
+    .then(boundary => {
+      if (boundary.length > 0) {
+        L.polygon(boundary, {
+          color: '#16a34a', weight: 2,
+          fillColor: '#16a34a', fillOpacity: 0.08,
+        }).addTo(map).bindPopup('Boundary');
+      }
+    });
 
   species.forEach(s => {
     L.marker([s.lat, s.lng], { icon: markerIcon })

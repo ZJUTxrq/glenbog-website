@@ -16,7 +16,7 @@ from app import app
 from glenbog.extensions import db
 from glenbog.models import SurveyObservation
 
-CSV_PATH = '/data/SurveyMap_Past6Months_Glenbog.csv'
+CSV_PATH = '/data/SurveyMap_Past6Months.csv'
 
 
 def import_survey_map(csv_path: str) -> None:
@@ -35,6 +35,7 @@ def import_survey_map(csv_path: str) -> None:
                 vernacular_name=row['vernacularName'],
                 event_date=event_date,
                 data_resource_name=row['dataResourceName'],
+                recorded_by=row.get('recordedBy'),
                 latitude=float(row['decimalLatitude']),
                 longitude=float(row['decimalLongitude']),
             ))

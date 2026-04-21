@@ -73,6 +73,20 @@ class AtRiskSpecies(db.Model):
         return f'<AtRiskSpecies {self.common_name}>'
 
 
+class OrderSummary(db.Model):
+    __tablename__ = 'order_summary'
+    id = db.Column(db.Integer, primary_key=True)
+    order = db.Column(db.String(100), nullable=False)
+    class_display = db.Column(db.String(100), nullable=False)
+    total_species = db.Column(db.Integer, default=0)
+    total_observations = db.Column(db.Integer, default=0)
+    proportion = db.Column(db.Float, default=0.0)
+    order_description = db.Column(db.String(255), nullable=True)
+
+    def __repr__(self):
+        return f'<OrderSummary {self.order}>'
+
+
 class TimeDotObservation(db.Model):
     __tablename__ = 'time_dot_observations'
     id = db.Column(db.Integer, primary_key=True)
@@ -94,6 +108,7 @@ class SurveyObservation(db.Model):
     vernacular_name = db.Column(db.String(255), nullable=False)
     event_date = db.Column(db.Date, nullable=False)
     data_resource_name = db.Column(db.String(255))
+    recorded_by = db.Column(db.String(255), nullable=True)
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
 
