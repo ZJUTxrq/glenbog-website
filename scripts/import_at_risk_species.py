@@ -16,7 +16,7 @@ from app import app
 from glenbog.extensions import db
 from glenbog.models import AtRiskSpecies
 
-CSV_PATH = '/data/At_Risk_Species.csv'
+CSV_PATH = f"{os.environ.get('DATA_DIR', '/data')}/At_Risk_Species.csv"
 
 
 def import_at_risk_species(csv_path: str) -> None:

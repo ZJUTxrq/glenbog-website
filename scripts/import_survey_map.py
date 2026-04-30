@@ -16,7 +16,7 @@ from app import app
 from glenbog.extensions import db
 from glenbog.models import SurveyObservation
 
-CSV_PATH = '/data/SurveyMap_Past6Months.csv'
+CSV_PATH = f"{os.environ.get('DATA_DIR', '/data')}/SurveyMap_Past6Months.csv"
 
 
 def import_survey_map(csv_path: str) -> None:

@@ -18,7 +18,8 @@ from glenbog.extensions import db
 from glenbog.models import Species
 
 
-CSV_PATH = sys.argv[1] if len(sys.argv) > 1 else '/data/Species_Summary.csv'
+_data_dir = os.environ.get('DATA_DIR', '/data')
+CSV_PATH = sys.argv[1] if len(sys.argv) > 1 else f'{_data_dir}/Species_Summary.csv'
 
 
 def import_species(csv_path: str) -> None:

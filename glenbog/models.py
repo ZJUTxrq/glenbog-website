@@ -114,3 +114,19 @@ class SurveyObservation(db.Model):
 
     def __repr__(self):
         return f'<SurveyObservation {self.scientific_name} {self.event_date}>'
+
+
+class BirdTrait(db.Model):
+    __tablename__ = 'bird_traits'
+    id = db.Column(db.Integer, primary_key=True)
+    scientific_name = db.Column(db.String(255), nullable=False)
+    common_name = db.Column(db.String(255), nullable=False)
+    most_recent_date = db.Column(db.Date, nullable=True)
+    iucn_status = db.Column(db.String(10), nullable=True)
+    primary_habitat = db.Column(db.String(100), nullable=True)
+    primary_diet = db.Column(db.String(100), nullable=True)
+    average_mass_g = db.Column(db.Float, nullable=True)
+    migratory = db.Column(db.String(50), nullable=True)
+
+    def __repr__(self):
+        return f'<BirdTrait {self.common_name}>'

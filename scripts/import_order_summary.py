@@ -15,7 +15,7 @@ from app import app
 from glenbog.extensions import db
 from glenbog.models import OrderSummary
 
-CSV_PATH = '/data/Order_Summary.csv'
+CSV_PATH = f"{os.environ.get('DATA_DIR', '/data')}/Order_Summary.csv"
 
 
 def import_order_summary(csv_path: str) -> None:

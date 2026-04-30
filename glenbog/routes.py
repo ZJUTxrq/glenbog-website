@@ -1,3 +1,4 @@
+import sys
 import threading
 import uuid
 import tempfile
@@ -9,7 +10,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_user, logout_user, login_required
 
 from .extensions import db, login_manager
-from .models import User, Species, SpeciesClassSummary, OrderSummary, KeySpecies, AtRiskSpecies, TimeDotObservation, SurveyObservation
+from .models import User, Species, SpeciesClassSummary, OrderSummary, KeySpecies, AtRiskSpecies, TimeDotObservation, SurveyObservation, BirdTrait
 
 bp = Blueprint('main', __name__)
 
@@ -56,23 +57,28 @@ def download_ala_start():
     boundary_dest = Path(__file__).parent / 'static' / 'boundary.kml'
     shutil.copy2(str(kml_path), str(boundary_dest))
 
+    from flask import current_app
+    data_dir = current_app.config['DATA_DIR']
+    scripts_dir = str(Path(__file__).parent.parent / 'scripts')
     CLEAN_SCRIPTS = [
-        '/data/Species_Summary.py',
-        '/data/Class_Summary.py',
-        '/data/Order_Summary.py',
-        '/data/At_Risk_Species.py',
-        '/data/Key_Species.py',
-        '/data/SurveyMap_Past6Months.py',
-        '/data/TimeDotGraph_Data.py',
+        f'{data_dir}/Species_Summary.py',
+        f'{data_dir}/Class_Summary.py',
+        f'{data_dir}/Order_Summary.py',
+        f'{data_dir}/At_Risk_Species.py',
+        f'{data_dir}/Key_Species.py',
+        f'{data_dir}/SurveyMap_Past6Months.py',
+        f'{data_dir}/TimeDotGraph_Data.py',
+        f'{data_dir}/Bird_Traits.py',
     ]
     IMPORT_SCRIPTS = [
-        '/app/scripts/import_species.py',
-        '/app/scripts/import_class_summary.py',
-        '/app/scripts/import_order_summary.py',
-        '/app/scripts/import_at_risk_species.py',
-        '/app/scripts/import_key_species.py',
-        '/app/scripts/import_survey_map.py',
-        '/app/scripts/import_time_dot.py',
+        f'{scripts_dir}/import_species.py',
+        f'{scripts_dir}/import_class_summary.py',
+        f'{scripts_dir}/import_order_summary.py',
+        f'{scripts_dir}/import_at_risk_species.py',
+        f'{scripts_dir}/import_key_species.py',
+        f'{scripts_dir}/import_survey_map.py',
+        f'{scripts_dir}/import_time_dot.py',
+        f'{scripts_dir}/import_bird_traits.py',
     ]
     all_scripts = [('clean', s) for s in CLEAN_SCRIPTS] + [('import', s) for s in IMPORT_SCRIPTS]
     steps = [{'name': Path(s).stem, 'type': t, 'status': 'pending'} for t, s in all_scripts]
@@ -90,15 +96,15 @@ def download_ala_start():
             # Step 1: download from ALA
             download_ala_from_kml(kml_path, output_path, progress)
 
-            # Step 2: copy to /data/Glenbog.csv
+            # Step 2: copy to DATA_DIR/Glenbog.csv
             progress['status'] = 'copying'
-            shutil.copy2(str(output_path), '/data/Glenbog.csv')
+            shutil.copy2(str(output_path), f'{data_dir}/Glenbog.csv')
 
             # Step 3: run cleaning + import scripts
             for i, (_, script) in enumerate(all_scripts):
                 steps[i]['status'] = 'running'
                 result = subprocess.run(
-                    ['python', script],
+                    [sys.executable, script],
                     capture_output=True, text=True
                 )
                 if result.returncode != 0:
@@ -153,8 +159,12 @@ def register():
         password = request.form.get('password', '')
         password2 = request.form.get('password2', '')
 
-        if not email or not password or not password2:
+        reg_code = request.form.get('reg_code', '')
+        if not email or not password or not password2 or not reg_code:
             flash('Please fill in all fields.')
+            return redirect(url_for('main.register'))
+        if reg_code != 'ruqian_cactus':
+            flash('Invalid registration code.')
             return redirect(url_for('main.register'))
         if password != password2:
             flash('Passwords do not match.')
@@ -259,7 +269,7 @@ def _load_glenbog_boundary():
     # Prefer the user-uploaded boundary, fall back to the default one
     candidates = [
         Path(__file__).parent / 'static' / 'boundary.kml',
-        Path('/data/Glenbog Boundary.kml'),
+        Path(current_app.config['DATA_DIR']) / 'Glenbog Boundary.kml',
     ]
     for kml_path in candidates:
         try:
@@ -335,3 +345,11 @@ def species_list():
     page = request.args.get('page', 1, type=int)
     pagination = Species.query.order_by(Species.class_display, Species.vernacular_name).paginate(page=page, per_page=6, error_out=False)
     return render_template('species.html', species=pagination.items, pagination=pagination)
+
+
+@bp.route('/bird-traits')
+@login_required
+def bird_traits():
+    page = request.args.get('page', 1, type=int)
+    pagination = BirdTrait.query.order_by(BirdTrait.common_name).paginate(page=page, per_page=6, error_out=False)
+    return render_template('bird_traits.html', traits=pagination.items, pagination=pagination)

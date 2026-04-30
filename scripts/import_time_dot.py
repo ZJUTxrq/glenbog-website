@@ -16,7 +16,7 @@ from app import app
 from glenbog.extensions import db
 from glenbog.models import TimeDotObservation
 
-CSV_PATH = '/data/TimeDotGraph_Data.csv'
+CSV_PATH = f"{os.environ.get('DATA_DIR', '/data')}/TimeDotGraph_Data.csv"
 
 
 def import_time_dot(csv_path: str) -> None:

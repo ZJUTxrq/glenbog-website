@@ -104,6 +104,7 @@
 
   function renderSteps(steps) {
     if (!steps || steps.length === 0) return;
+    if (!steps.some(s => s.status === 'error' || s.error)) return;
     pipeline.style.display = 'block';
     stepList.innerHTML = steps.map(s => `
       <div class="step ${s.status}">

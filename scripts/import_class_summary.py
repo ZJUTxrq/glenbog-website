@@ -15,7 +15,7 @@ from app import app
 from glenbog.extensions import db
 from glenbog.models import SpeciesClassSummary
 
-CLASS_CSV = '/data/Class_Summary.csv'
+CLASS_CSV = f"{os.environ.get('DATA_DIR', '/data')}/Class_Summary.csv"
 
 
 def import_class_summary(csv_path: str) -> None:

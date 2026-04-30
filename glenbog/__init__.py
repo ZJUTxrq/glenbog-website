@@ -1,5 +1,8 @@
 import os
 from flask import Flask
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from .extensions import db, bcrypt, login_manager
 from .routes import bp as main_bp
