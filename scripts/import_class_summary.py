@@ -11,14 +11,25 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app
-from glenbog.extensions import db
-from glenbog.models import SpeciesClassSummary
-
 CLASS_CSV = f"{os.environ.get('DATA_DIR', '/data')}/Class_Summary.csv"
 
 
+def parse_class_summary_row(row: dict) -> dict | None:
+    if row['class_display'] == 'Grand Total':
+        return None
+
+    return {
+        'class_display': row['class_display'],
+        'num_observations': int(row['num_observations']),
+        'num_species': int(row['num_species']),
+        'class_description': row['class_description'] or None,
+    }
+
+
 def import_class_summary(csv_path: str) -> None:
+    from glenbog.extensions import db
+    from glenbog.models import SpeciesClassSummary
+
     SpeciesClassSummary.__table__.drop(db.engine, checkfirst=True)
     db.create_all()
 
@@ -26,14 +37,10 @@ def import_class_summary(csv_path: str) -> None:
         reader = csv.DictReader(f)
         count = 0
         for row in reader:
-            if row['class_display'] == 'Grand Total':
+            parsed = parse_class_summary_row(row)
+            if parsed is None:
                 continue
-            db.session.add(SpeciesClassSummary(
-                class_display=row['class_display'],
-                num_observations=int(row['num_observations']),
-                num_species=int(row['num_species']),
-                class_description=row['class_description'] or None,
-            ))
+            db.session.add(SpeciesClassSummary(**parsed))
             count += 1
 
     db.session.commit()
@@ -41,5 +48,7 @@ def import_class_summary(csv_path: str) -> None:
 
 
 if __name__ == '__main__':
+    from app import app
+
     with app.app_context():
         import_class_summary(CLASS_CSV)

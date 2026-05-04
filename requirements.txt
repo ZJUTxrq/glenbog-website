@@ -40,3 +40,4 @@ xlsxwriter
 requests==2.32.3
 pytest==8.3.5
 pytest-flask==1.3.0
+selenium==4.25.0

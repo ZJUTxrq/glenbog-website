@@ -12,14 +12,27 @@ from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app
-from glenbog.extensions import db
-from glenbog.models import KeySpecies
-
 KEY_SPECIES_CSV = f"{os.environ.get('DATA_DIR', '/data')}/Key_Species.csv"
 
 
+def parse_key_species_row(row: dict) -> dict:
+    most_recent = None
+    if row['most_recent_date']:
+        most_recent = date.fromisoformat(row['most_recent_date'])
+
+    return {
+        'class_display': row['class'],
+        'common_name': row['common_name'],
+        'scientific_name': row['scientific_name'],
+        'num_observations': int(row['num_observations']),
+        'most_recent_date': most_recent,
+    }
+
+
 def import_key_species(csv_path: str) -> None:
+    from glenbog.extensions import db
+    from glenbog.models import KeySpecies
+
     KeySpecies.__table__.drop(db.engine, checkfirst=True)
     db.create_all()
 
@@ -27,16 +40,7 @@ def import_key_species(csv_path: str) -> None:
         reader = csv.DictReader(f)
         count = 0
         for row in reader:
-            most_recent = None
-            if row['most_recent_date']:
-                most_recent = date.fromisoformat(row['most_recent_date'])
-            db.session.add(KeySpecies(
-                class_display=row['class'],
-                common_name=row['common_name'],
-                scientific_name=row['scientific_name'],
-                num_observations=int(row['num_observations']),
-                most_recent_date=most_recent,
-            ))
+            db.session.add(KeySpecies(**parse_key_species_row(row)))
             count += 1
 
     db.session.commit()
@@ -44,5 +48,7 @@ def import_key_species(csv_path: str) -> None:
 
 
 if __name__ == '__main__':
+    from app import app
+
     with app.app_context():
         import_key_species(KEY_SPECIES_CSV)

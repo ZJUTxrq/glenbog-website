@@ -35,5 +35,30 @@ services:
       timeout: 10s
       retries: 5
 
+  selenium:
+    image: selenium/standalone-chrome:4.25.0
+    container_name: glenbog_selenium
+    shm_size: 2gb
+    ports:
+      - "4444:4444"
+      - "7900:7900"
+
+  smoke:
+    build: .
+    profiles: ["test"]
+    working_dir: /app
+    environment:
+      PYTHONPATH: /app
+      BASE_URL: http://app:8000
+      SELENIUM_REMOTE_URL: http://selenium:4444/wd/hub
+      SMOKE_EMAIL: smoke@example.test
+      SMOKE_PASSWORD: "123"
+    depends_on:
+      - app
+      - selenium
+    volumes:
+      - .:/app
+    command: ["pytest", "-q", "tests"]
+
 volumes:
   db_data:

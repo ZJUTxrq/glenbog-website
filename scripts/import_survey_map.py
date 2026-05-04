@@ -12,14 +12,28 @@ from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app
-from glenbog.extensions import db
-from glenbog.models import SurveyObservation
-
 CSV_PATH = f"{os.environ.get('DATA_DIR', '/data')}/SurveyMap_Past6Months.csv"
 
 
+def parse_survey_map_row(row: dict) -> dict | None:
+    if not row['decimalLatitude'] or not row['decimalLongitude']:
+        return None
+
+    return {
+        'scientific_name': row['scientificName'],
+        'vernacular_name': row['vernacularName'],
+        'event_date': date.fromisoformat(row['eventDate']),
+        'data_resource_name': row['dataResourceName'],
+        'recorded_by': row.get('recordedBy'),
+        'latitude': float(row['decimalLatitude']),
+        'longitude': float(row['decimalLongitude']),
+    }
+
+
 def import_survey_map(csv_path: str) -> None:
+    from glenbog.extensions import db
+    from glenbog.models import SurveyObservation
+
     SurveyObservation.__table__.drop(db.engine, checkfirst=True)
     db.create_all()
 
@@ -27,18 +41,10 @@ def import_survey_map(csv_path: str) -> None:
         reader = csv.DictReader(f)
         count = 0
         for row in reader:
-            if not row['decimalLatitude'] or not row['decimalLongitude']:
+            parsed = parse_survey_map_row(row)
+            if parsed is None:
                 continue
-            event_date = date.fromisoformat(row['eventDate'])
-            db.session.add(SurveyObservation(
-                scientific_name=row['scientificName'],
-                vernacular_name=row['vernacularName'],
-                event_date=event_date,
-                data_resource_name=row['dataResourceName'],
-                recorded_by=row.get('recordedBy'),
-                latitude=float(row['decimalLatitude']),
-                longitude=float(row['decimalLongitude']),
-            ))
+            db.session.add(SurveyObservation(**parsed))
             count += 1
 
     db.session.commit()
@@ -46,5 +52,7 @@ def import_survey_map(csv_path: str) -> None:
 
 
 if __name__ == '__main__':
+    from app import app
+
     with app.app_context():
         import_survey_map(CSV_PATH)
