@@ -6,13 +6,15 @@ import shutil
 import subprocess
 import time as _time
 from pathlib import Path
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, jsonify, current_app
 from flask_login import login_user, logout_user, login_required
+from sqlalchemy import case
 
 from .extensions import db, login_manager
 from .models import User, Species, SpeciesClassSummary, OrderSummary, KeySpecies, AtRiskSpecies, TimeDotObservation, SurveyObservation, BirdTrait
 
 bp = Blueprint('main', __name__)
+BIRD_CONCERN_STATUSES = ('NT', 'VU', 'EN', 'CR')
 
 # In-memory job store: {job_id: {status, total, fetched, batches, batch, error, output_path}}
 _jobs: dict = {}
@@ -57,7 +59,6 @@ def download_ala_start():
     boundary_dest = Path(__file__).parent / 'static' / 'boundary.kml'
     shutil.copy2(str(kml_path), str(boundary_dest))
 
-    from flask import current_app
     data_dir = current_app.config['DATA_DIR']
     scripts_dir = str(Path(__file__).parent.parent / 'scripts')
     CLEAN_SCRIPTS = [
@@ -352,4 +353,35 @@ def species_list():
 def bird_traits():
     page = request.args.get('page', 1, type=int)
     pagination = BirdTrait.query.order_by(BirdTrait.common_name).paginate(page=page, per_page=6, error_out=False)
-    return render_template('bird_traits.html', traits=pagination.items, pagination=pagination)
+    return render_template(
+        'bird_traits.html',
+        traits=pagination.items,
+        pagination=pagination,
+        page_title='Bird Traits',
+        page_description='Bird species observed at Glenbog State Forest with biological trait data from BirdBase 2025',
+        pagination_endpoint='main.bird_traits',
+    )
+
+
+@bp.route('/bird-traits/concern')
+@login_required
+def birds_of_concern():
+    page = request.args.get('page', 1, type=int)
+    status_rank = case(
+        (BirdTrait.iucn_status == 'CR', 1),
+        (BirdTrait.iucn_status == 'EN', 2),
+        (BirdTrait.iucn_status == 'VU', 3),
+        (BirdTrait.iucn_status == 'NT', 4),
+        else_=5,
+    )
+    pagination = BirdTrait.query.filter(
+        BirdTrait.iucn_status.in_(BIRD_CONCERN_STATUSES)
+    ).order_by(status_rank, BirdTrait.common_name).paginate(page=page, per_page=6, error_out=False)
+    return render_template(
+        'bird_traits.html',
+        traits=pagination.items,
+        pagination=pagination,
+        page_title='Birds of Concern',
+        page_description='Bird species with IUCN statuses above Least Concern',
+        pagination_endpoint='main.birds_of_concern',
+    )
