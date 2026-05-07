@@ -27,6 +27,7 @@ def parse_species_row(row: dict) -> dict:
         'order': row['order'],
         'scientific_name': row['scientificName_clean'],
         'vernacular_name': row['vernacularName'],
+        'native_status': row.get('native_status') or None,
         'num_observations': int(row['num_observations']),
         'most_recent_date': most_recent,
     }

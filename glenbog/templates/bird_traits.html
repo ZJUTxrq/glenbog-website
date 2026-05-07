@@ -4,14 +4,24 @@
 
 {% block content %}
 <style>
-  .card { width: min(100%, 1100px) !important; }
+  .card { width: min(98vw, 1680px) !important; padding-left: 2rem !important; padding-right: 2rem !important; }
   main { align-items: flex-start !important; }
-  .species-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
-  .species-table th { background: #f1f5f9; padding: 0.65rem 0.75rem; text-align: left; font-weight: 600; border-bottom: 2px solid #e2e8f0; white-space: nowrap; font-size: 0.88rem; }
-  .species-table td { padding: 0.65rem 0.75rem; border-bottom: 1px solid #e2e8f0; vertical-align: middle; font-size: 0.88rem; }
+  .species-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; table-layout: fixed; }
+  .species-table th { background: #f1f5f9; padding: 0.65rem 0.75rem; text-align: left; font-weight: 600; border-bottom: 2px solid #e2e8f0; font-size: 0.88rem; overflow-wrap: anywhere; }
+  .species-table td { padding: 0.65rem 0.75rem; border-bottom: 1px solid #e2e8f0; vertical-align: middle; font-size: 0.88rem; overflow-wrap: anywhere; }
   .species-table tr:hover { background: #f8fafc; }
   .species-name { font-style: italic; color: #64748b; }
-  .table-wrap { min-height: 380px; overflow-x: auto; }
+  .table-wrap { min-height: 380px; overflow-x: visible; }
+  .species-table th:nth-child(1), .species-table td:nth-child(1) { width: 13%; }
+  .species-table th:nth-child(2), .species-table td:nth-child(2) { width: 14%; }
+  .species-table th:nth-child(3), .species-table td:nth-child(3) { width: 7%; }
+  .species-table th:nth-child(4), .species-table td:nth-child(4) { width: 10%; }
+  .species-table th:nth-child(5), .species-table td:nth-child(5) { width: 10%; }
+  .species-table th:nth-child(6), .species-table td:nth-child(6) { width: 7%; }
+  .species-table th:nth-child(7), .species-table td:nth-child(7) { width: 8%; }
+  .species-table th:nth-child(8), .species-table td:nth-child(8) { width: 11%; }
+  .species-table th:nth-child(9), .species-table td:nth-child(9) { width: 10%; }
+  .species-table th:nth-child(10), .species-table td:nth-child(10) { width: 10%; }
   .badge { display: inline-block; padding: 0.3rem 0.7rem; border-radius: 0.5rem; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
   .badge-lc { background: #dcfce7; color: #15803d; }
   .badge-nt { background: #fef9c3; color: #854d0e; }
@@ -59,6 +69,8 @@
         <th>Avg Mass (g)</th>
         <th>Migratory</th>
         <th>Most Recent Obs.</th>
+        <th>Nest Type</th>
+        <th>Nest Site</th>
       </tr>
     </thead>
     <tbody>
@@ -71,14 +83,16 @@
             {% if t.iucn_status %}
               <span class="badge badge-{{ status if status in ['lc','nt','vu','en','cr'] else 'default' }}">{{ t.iucn_status }}</span>
             {% else %}
-              <span style="color:#94a3b8;">—</span>
+              <span style="color:#94a3b8;">-</span>
             {% endif %}
           </td>
-          <td>{{ t.primary_habitat or '—' }}</td>
-          <td>{{ t.primary_diet or '—' }}</td>
-          <td>{{ '%.1f'|format(t.average_mass_g) if t.average_mass_g else '—' }}</td>
-          <td>{{ t.migratory or '—' }}</td>
-          <td>{{ t.most_recent_date.strftime('%Y-%m-%d') if t.most_recent_date else '—' }}</td>
+          <td>{{ t.primary_habitat or '-' }}</td>
+          <td>{{ t.primary_diet or '-' }}</td>
+          <td>{{ '%.1f'|format(t.average_mass_g) if t.average_mass_g else '-' }}</td>
+          <td>{{ t.migratory or '-' }}</td>
+          <td>{{ t.most_recent_date.strftime('%Y-%m-%d') if t.most_recent_date else '-' }}</td>
+          <td>{{ t.nest_type or '-' }}</td>
+          <td>{{ t.nest_site or '-' }}</td>
         </tr>
       {% endfor %}
     </tbody>
@@ -87,9 +101,9 @@
 
   <div class="pagination">
     {% if pagination.has_prev %}
-      <a href="{{ url_for(pagination_endpoint or 'main.bird_traits', page=pagination.prev_num) }}">‹ Prev</a>
+      <a href="{{ url_for(pagination_endpoint or 'main.bird_traits', page=pagination.prev_num) }}">Prev</a>
     {% else %}
-      <span class="disabled">‹ Prev</span>
+      <span class="disabled">Prev</span>
     {% endif %}
 
     {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
@@ -100,14 +114,14 @@
           <a href="{{ url_for(pagination_endpoint or 'main.bird_traits', page=p) }}">{{ p }}</a>
         {% endif %}
       {% else %}
-        <span class="disabled">…</span>
+        <span class="disabled">...</span>
       {% endif %}
     {% endfor %}
 
     {% if pagination.has_next %}
-      <a href="{{ url_for(pagination_endpoint or 'main.bird_traits', page=pagination.next_num) }}">Next ›</a>
+      <a href="{{ url_for(pagination_endpoint or 'main.bird_traits', page=pagination.next_num) }}">Next</a>
     {% else %}
-      <span class="disabled">Next ›</span>
+      <span class="disabled">Next</span>
     {% endif %}
   </div>
 

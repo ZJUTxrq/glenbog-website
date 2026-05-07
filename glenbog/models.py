@@ -24,6 +24,7 @@ class Species(db.Model):
     order = db.Column(db.String(100), nullable=False)
     scientific_name = db.Column(db.String(255), nullable=False)
     vernacular_name = db.Column(db.String(255), nullable=False)
+    native_status = db.Column(db.String(50), nullable=True)
     num_observations = db.Column(db.Integer, default=0)
     most_recent_date = db.Column(db.Date, nullable=True)
 
@@ -127,6 +128,8 @@ class BirdTrait(db.Model):
     primary_diet = db.Column(db.String(100), nullable=True)
     average_mass_g = db.Column(db.Float, nullable=True)
     migratory = db.Column(db.String(50), nullable=True)
+    nest_type = db.Column(db.String(255), nullable=True)
+    nest_site = db.Column(db.String(255), nullable=True)
 
     def __repr__(self):
         return f'<BirdTrait {self.common_name}>'

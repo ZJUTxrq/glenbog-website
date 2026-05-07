@@ -344,8 +344,12 @@ def species_stats():
 @login_required
 def species_list():
     page = request.args.get('page', 1, type=int)
-    pagination = Species.query.order_by(Species.class_display, Species.vernacular_name).paginate(page=page, per_page=6, error_out=False)
-    return render_template('species.html', species=pagination.items, pagination=pagination)
+    native_status = request.args.get('native_status', '').strip()
+    query = Species.query
+    if native_status:
+        query = query.filter(Species.native_status == native_status)
+    pagination = query.order_by(Species.class_display, Species.vernacular_name).paginate(page=page, per_page=6, error_out=False)
+    return render_template('species.html', species=pagination.items, pagination=pagination, native_status=native_status)
 
 
 @bp.route('/bird-traits')

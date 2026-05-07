@@ -13,11 +13,15 @@ def test_parse_bird_traits_row_converts_values():
         "primary_diet": "Insects",
         "average_mass_g": "12.5",
         "migratory": "Resident",
+        "nest_type": "Cup / bowl",
+        "nest_site": "Tree",
     })
 
     assert parsed["most_recent_date"] == date(2026, 4, 1)
     assert parsed["average_mass_g"] == 12.5
     assert parsed["iucn_status"] == "EN"
+    assert parsed["nest_type"] == "Cup / bowl"
+    assert parsed["nest_site"] == "Tree"
 
 
 def test_parse_bird_traits_row_handles_empty_optional_values():
@@ -30,6 +34,8 @@ def test_parse_bird_traits_row_handles_empty_optional_values():
         "primary_diet": "",
         "average_mass_g": "",
         "migratory": "",
+        "nest_type": "",
+        "nest_site": "",
     })
 
     assert parsed["most_recent_date"] is None
@@ -38,3 +44,5 @@ def test_parse_bird_traits_row_handles_empty_optional_values():
     assert parsed["primary_diet"] is None
     assert parsed["average_mass_g"] is None
     assert parsed["migratory"] is None
+    assert parsed["nest_type"] is None
+    assert parsed["nest_site"] is None

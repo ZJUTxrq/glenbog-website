@@ -29,6 +29,8 @@ def parse_bird_traits_row(row: dict) -> dict:
         'primary_diet': row['primary_diet'] or None,
         'average_mass_g': float(row['average_mass_g']) if row['average_mass_g'] else None,
         'migratory': row['migratory'] or None,
+        'nest_type': row.get('nest_type') or None,
+        'nest_site': row.get('nest_site') or None,
     }
 
 
